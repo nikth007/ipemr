@@ -1,0 +1,599 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth (Auth.js) ────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Users & RBAC ──────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  employeeId     String    @unique @map("employee_id")
+  name           String
+  email          String?   @unique
+  emailVerified  DateTime? @map("email_verified")
+  image          String?
+  passwordHash   String    @map("password_hash")
+  roleId         String    @map("role_id")
+  departmentId   String?   @map("department_id")
+  designation    String?
+  phone          String?
+  isActive       Boolean   @default(true) @map("is_active")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  role           Role      @relation(fields: [roleId], references: [id])
+  department     Department? @relation(fields: [departmentId], references: [id])
+  accounts       Account[]
+  sessions       Session[]
+  auditLogs      AuditLog[]
+  ordersCreated  Order[]   @relation("OrderCreatedBy")
+  notesAuthored  ClinicalNote[] @relation("NoteAuthor")
+  vitalsRecorded Vitals[]  @relation("VitalsRecordedBy")
+  marAdministrations MarAdministration[] @relation("MarAdministeredBy")
+
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model RolePermission {
+  id       String @id @default(cuid())
+  roleId   String @map("role_id")
+  resource String
+  action   String
+
+  role     Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resource, action])
+  @@map("role_permissions")
+}
+
+// ─── Organization ──────────────────────────────────────────
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users     User[]
+  wards     Ward[]
+
+  @@map("departments")
+}
+
+model Ward {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  departmentId String   @map("department_id")
+  wardType     String   @map("ward_type") // general, icu, hdu, private, semi_private
+  floor        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  department   Department @relation(fields: [departmentId], references: [id])
+  beds         Bed[]
+
+  @@map("wards")
+}
+
+model Bed {
+  id               String   @id @default(cuid())
+  bedNumber        String   @map("bed_number")
+  wardId           String   @map("ward_id")
+  status           String   @default("available") // available, occupied, reserved, maintenance
+  bedType          String   @default("general") @map("bed_type") // general, isolation, monitored
+  genderRestriction String? @map("gender_restriction") // male, female, null
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  ward             Ward     @relation(fields: [wardId], references: [id])
+  encounters       Encounter[]
+  transfersFrom    Transfer[] @relation("TransferFrom")
+  transfersTo      Transfer[] @relation("TransferTo")
+
+  @@unique([wardId, bedNumber])
+  @@map("beds")
+}
+
+// ─── Patient & Encounter ───────────────────────────────────
+
+model Patient {
+  id          String    @id @default(cuid())
+  uhid        String    @unique
+  name        String
+  dateOfBirth DateTime? @map("date_of_birth")
+  gender      String    // male, female, other
+  bloodGroup  String?   @map("blood_group")
+  phone       String?
+  email       String?
+  address     String?   @db.Text
+  abhaId      String?   @unique @map("abha_id")
+  allergies   String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  encounters  Encounter[]
+
+  @@index([name])
+  @@index([phone])
+  @@map("patients")
+}
+
+model Encounter {
+  id               String    @id @default(cuid())
+visNo            String    @unique @map("ip_no")
+  patientId        String    @map("patient_id")
+  bedId            String?   @map("bed_id")
+  attendingDoctorId String   @map("attending_doctor_id")
+  admissionDate    DateTime  @default(now()) @map("admission_date")
+  dischargeDate    DateTime? @map("discharge_date")
+  status           String    @default("admitted") // admitted, discharged, transferred, lama
+  admissionType    String    @default("elective") @map("admission_type") // emergency, elective
+  chiefComplaint   String?   @map("chief_complaint") @db.Text
+  provisionalDiagnosis String? @map("provisional_diagnosis") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  patient          Patient   @relation(fields: [patientId], references: [id])
+  bed              Bed?      @relation(fields: [bedId], references: [id])
+  transfers        Transfer[]
+  orders           Order[]
+  clinicalNotes    ClinicalNote[]
+  vitals           Vitals[]
+  intakeOutputs    IntakeOutput[]
+  nursingAssessments NursingAssessment[]
+  diagnoses        Diagnosis[]
+  dischargeSummary DischargeSummary?
+  marSchedules     MarSchedule[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([admissionDate])
+  @@map("encounters")
+}
+
+model Transfer {
+  id           String   @id @default(cuid())
+  encounterId  String   @map("encounter_id")
+  fromBedId    String   @map("from_bed_id")
+  toBedId      String   @map("to_bed_id")
+  transferTime DateTime @default(now()) @map("transfer_time")
+  reason       String?
+  transferredBy String  @map("transferred_by")
+
+  encounter    Encounter @relation(fields: [encounterId], references: [id])
+  fromBed      Bed       @relation("TransferFrom", fields: [fromBedId], references: [id])
+  toBed        Bed       @relation("TransferTo", fields: [toBedId], references: [id])
+
+  @@map("transfers")
+}
+
+// ─── Orders (CPOE) ─────────────────────────────────────────
+
+model Order {
+  id           String   @id @default(cuid())
+  encounterId  String   @map("encounter_id")
+  orderType    String   @map("order_type") // medication, investigation, diet, nursing, procedure
+  status       String   @default("draft") // draft, signed, verified, active, completed, discontinued, cancelled
+  priority     String   @default("routine") // stat, urgent, routine
+  orderedById  String   @map("ordered_by")
+  orderedAt    DateTime @default(now()) @map("ordered_at")
+  signedAt     DateTime? @map("signed_at")
+  discontinuedAt DateTime? @map("discontinued_at")
+  discontinuedReason String? @map("discontinued_reason")
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  encounter    Encounter @relation(fields: [encounterId], references: [id])
+  orderedBy    User      @relation("OrderCreatedBy", fields: [orderedById], references: [id])
+  medicationOrder MedicationOrder?
+  investigationOrder InvestigationOrder?
+  dietOrder    DietOrder?
+  nursingOrder NursingOrder?
+
+  @@index([encounterId])
+  @@index([status])
+  @@index([orderType])
+  @@map("orders")
+}
+
+model MedicationOrder {
+  id        String @id @default(cuid())
+  orderId   String @unique @map("order_id")
+  drugId    String @map("drug_id")
+  dose      String
+  unit      String
+  route     String // oral, iv, im, sc, topical, inhalation
+  frequency String // od, bd, tid, qid, sos, stat, prn
+  duration  String?
+  isPrn     Boolean @default(false) @map("is_prn")
+  prnReason String? @map("prn_reason")
+  instructions String?
+
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  drug      DrugMaster @relation(fields: [drugId], references: [id])
+  marSchedules MarSchedule[]
+
+  @@map("medication_orders")
+}
+
+model InvestigationOrder {
+  id                  String @id @default(cuid())
+  orderId             String @unique @map("order_id")
+  investigationId     String @map("investigation_id")
+  specimenType        String? @map("specimen_type")
+  clinicalIndication  String? @map("clinical_indication")
+
+  order               Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  investigation       InvestigationMaster @relation(fields: [investigationId], references: [id])
+  results             InvestigationResult[]
+
+  @@map("investigation_orders")
+}
+
+model DietOrder {
+  id                  String @id @default(cuid())
+  orderId             String @unique @map("order_id")
+  dietType            String @map("diet_type") // regular, soft, liquid, npo, diabetic, renal, cardiac
+  restrictions        String?
+  specialInstructions String? @map("special_instructions") @db.Text
+
+  order               Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("diet_orders")
+}
+
+model NursingOrder {
+  id          String @id @default(cuid())
+  orderId     String @unique @map("order_id")
+  instruction String @db.Text
+  frequency   String?
+  category    String? // monitoring, positioning, wound_care, catheter, drain
+
+  order       Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("nursing_orders")
+}
+
+// ─── Masters ───────────────────────────────────────────────
+
+model DrugMaster {
+  id          String @id @default(cuid())
+  genericName String @map("generic_name")
+  brandName   String? @map("brand_name")
+  strength    String?
+  form        String? // tablet, capsule, injection, syrup, cream, drops, inhaler
+  route       String? // oral, iv, im, sc, topical, inhalation
+  category    String? // antibiotic, analgesic, antihypertensive, etc.
+  isActive    Boolean @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  medicationOrders MedicationOrder[]
+  interactionsA    DrugInteraction[] @relation("DrugA")
+  interactionsB    DrugInteraction[] @relation("DrugB")
+  dischargeMedications DischargeMedication[]
+
+  @@index([genericName])
+  @@map("drug_master")
+}
+
+model DrugInteraction {
+  id          String @id @default(cuid())
+  drugAId     String @map("drug_a_id")
+  drugBId     String @map("drug_b_id")
+  severity    String // critical, major, moderate, minor
+  description String @db.Text
+
+  drugA       DrugMaster @relation("DrugA", fields: [drugAId], references: [id])
+  drugB       DrugMaster @relation("DrugB", fields: [drugBId], references: [id])
+
+  @@unique([drugAId, drugBId])
+  @@map("drug_interactions")
+}
+
+model InvestigationMaster {
+  id          String @id @default(cuid())
+  name        String
+  category    String // lab, radiology, pathology
+  department  String?
+  specimenType String? @map("specimen_type")
+  normalRange String? @map("normal_range")
+  unit        String?
+  isActive    Boolean @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  investigationOrders InvestigationOrder[]
+
+  @@index([name])
+  @@index([category])
+  @@map("investigation_master")
+}
+
+// ─── eMAR ──────────────────────────────────────────────────
+
+model MarSchedule {
+  id                String   @id @default(cuid())
+  medicationOrderId String   @map("medication_order_id")
+  encounterId       String   @map("encounter_id")
+  scheduledTime     DateTime @map("scheduled_time")
+  status            String   @default("scheduled") // scheduled, due, administered, held, missed
+
+  medicationOrder   MedicationOrder @relation(fields: [medicationOrderId], references: [id])
+  encounter         Encounter @relation(fields: [encounterId], references: [id])
+  administration    MarAdministration?
+
+  @@index([encounterId, scheduledTime])
+  @@index([status])
+  @@map("mar_schedule")
+}
+
+model MarAdministration {
+  id             String   @id @default(cuid())
+  scheduleId     String   @unique @map("schedule_id")
+  administeredBy String   @map("administered_by")
+  administeredAt DateTime @map("administered_at")
+  doseGiven      String   @map("dose_given")
+  site           String?
+  notes          String?
+
+  schedule       MarSchedule @relation(fields: [scheduleId], references: [id])
+  nurse          User        @relation("MarAdministeredBy", fields: [administeredBy], references: [id])
+
+  @@map("mar_administration")
+}
+
+// ─── Clinical Documentation ────────────────────────────────
+
+model ClinicalNote {
+  id          String    @id @default(cuid())
+  encounterId String    @map("encounter_id")
+  noteType    String    @map("note_type") // admission, progress, consultation, procedure, nursing
+  content     Json
+  authorId    String    @map("author_id")
+  signedAt    DateTime? @map("signed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  encounter   Encounter @relation(fields: [encounterId], references: [id])
+  author      User      @relation("NoteAuthor", fields: [authorId], references: [id])
+
+  @@index([encounterId])
+  @@index([noteType])
+  @@map("clinical_notes")
+}
+
+model Diagnosis {
+  id          String   @id @default(cuid())
+  encounterId String   @map("encounter_id")
+  icdCode     String?  @map("icd_code")
+  description String
+  type        String   @default("secondary") // primary, secondary, comorbidity
+  diagnosedBy String   @map("diagnosed_by")
+  diagnosedAt DateTime @default(now()) @map("diagnosed_at")
+
+  encounter   Encounter @relation(fields: [encounterId], references: [id])
+
+  @@index([encounterId])
+  @@map("diagnoses")
+}
+
+// ─── Nursing ───────────────────────────────────────────────
+
+model Vitals {
+  id          String   @id @default(cuid())
+  encounterId String   @map("encounter_id")
+  recordedAt  DateTime @map("recorded_at")
+  temperature Float?
+  pulse       Int?
+  bpSystolic  Int?     @map("bp_systolic")
+  bpDiastolic Int?     @map("bp_diastolic")
+  spo2        Int?
+  respiratoryRate Int? @map("respiratory_rate")
+  painScore   Int?     @map("pain_score")
+  gcs         Int?
+  weight      Float?
+  bloodSugar  Float?   @map("blood_sugar")
+  notes       String?
+  recordedById String  @map("recorded_by")
+
+  encounter   Encounter @relation(fields: [encounterId], references: [id])
+  recordedBy  User      @relation("VitalsRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([encounterId, recordedAt])
+  @@map("vitals")
+}
+
+model IntakeOutput {
+  id          String   @id @default(cuid())
+  encounterId String   @map("encounter_id")
+  recordedAt  DateTime @map("recorded_at")
+  type        String   // intake, output
+  category    String   // oral, iv, blood, urine, drain, vomit, stool, ng_aspirate
+  volumeMl    Float    @map("volume_ml")
+  route       String?
+  recordedBy  String   @map("recorded_by")
+  notes       String?
+
+  encounter   Encounter @relation(fields: [encounterId], references: [id])
+
+  @@index([encounterId, recordedAt])
+  @@map("intake_output")
+}
+
+model NursingAssessment {
+  id             String   @id @default(cuid())
+  encounterId    String   @map("encounter_id")
+  assessmentType String   @map("assessment_type") // fall_risk, pressure_ulcer, pain, gcs, restraint
+  data           Json
+  assessedBy     String   @map("assessed_by")
+  assessedAt     DateTime @default(now()) @map("assessed_at")
+
+  encounter      Encounter @relation(fields: [encounterId], references: [id])
+
+  @@index([encounterId])
+  @@map("nursing_assessments")
+}
+
+// ─── Results ───────────────────────────────────────────────
+
+model InvestigationResult {
+  id                   String   @id @default(cuid())
+  investigationOrderId String   @map("investigation_order_id")
+  resultData           Json     @map("result_data")
+  resultStatus         String   @default("preliminary") @map("result_status") // preliminary, final, amended
+  isAbnormal           Boolean  @default(false) @map("is_abnormal")
+  isCritical           Boolean  @default(false) @map("is_critical")
+  reportedAt           DateTime @default(now()) @map("reported_at")
+  reportedBy           String   @map("reported_by")
+
+  investigationOrder   InvestigationOrder @relation(fields: [investigationOrderId], references: [id])
+  criticalAlerts       CriticalAlert[]
+
+  @@map("investigation_results")
+}
+
+model CriticalAlert {
+  id             String    @id @default(cuid())
+  resultId       String    @map("result_id")
+  alertType      String    @map("alert_type") // critical_value, abnormal_trend
+  value          String
+  acknowledgedBy String?   @map("acknowledged_by")
+  acknowledgedAt DateTime? @map("acknowledged_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  result         InvestigationResult @relation(fields: [resultId], references: [id])
+
+  @@map("critical_alerts")
+}
+
+// ─── Discharge ─────────────────────────────────────────────
+
+model DischargeSummary {
+  id                     String   @id @default(cuid())
+  encounterId            String   @unique @map("encounter_id")
+  diagnosisSummary       String?  @map("diagnosis_summary") @db.Text
+  courseInHospital        String?  @map("course_in_hospital") @db.Text
+  proceduresDone         String?  @map("procedures_done") @db.Text
+  conditionAtDischarge   String?  @map("condition_at_discharge")
+  instructions           String?  @db.Text
+  followUpDate           DateTime? @map("follow_up_date")
+  followUpInstructions   String?  @map("follow_up_instructions") @db.Text
+  preparedBy             String   @map("prepared_by")
+  approvedBy             String?  @map("approved_by")
+  approvedAt             DateTime? @map("approved_at")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  encounter              Encounter @relation(fields: [encounterId], references: [id])
+  dischargeMedications   DischargeMedication[]
+
+  @@map("discharge_summaries")
+}
+
+model DischargeMedication {
+  id          String @id @default(cuid())
+  summaryId   String @map("summary_id")
+  drugId      String @map("drug_id")
+  dose        String
+  frequency   String
+  duration    String
+  instructions String?
+
+  summary     DischargeSummary @relation(fields: [summaryId], references: [id], onDelete: Cascade)
+  drug        DrugMaster @relation(fields: [drugId], references: [id])
+
+  @@map("discharge_medications")
+}
+
+// ─── System ────────────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  action       String   // login, logout, create, update, delete, view
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  oldValue     Json?    @map("old_value")
+  newValue     Json?    @map("new_value")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  timestamp    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([timestamp])
+  @@map("audit_log")
+}
+
+model KraniumSyncQueue {
+  id          String   @id @default(cuid())
+  operation   String   // charge_post, status_update, bed_update
+  payload     Json
+  status      String   @default("pending") // pending, processing, synced, failed
+  retryCount  Int      @default(0) @map("retry_count")
+  errorMessage String? @map("error_message")
+  createdAt   DateTime @default(now()) @map("created_at")
+  syncedAt    DateTime? @map("synced_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("kranium_sync_queue")
+}
