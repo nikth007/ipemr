@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -35,6 +36,27 @@ export default function LoginPage() {
     }
   }
 
+  async function handleDemoLogin() {
+    setDemoLoading(true);
+    setError("");
+    try {
+      const result = await signIn("credentials", {
+        employeeId: "SMF1002",
+        password: "demo",
+        redirect: false,
+      });
+      if (result?.error) {
+        setError("Demo login failed. Please try again.");
+      } else {
+        router.push("/");
+      }
+    } catch {
+      setError("An unexpected error occurred.");
+    } finally {
+      setDemoLoading(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f4c75] to-[#1b262c] px-4">
       <div className="w-full max-w-md">
@@ -53,15 +75,40 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <div className="rounded-xl border border-white/10 bg-white p-8 shadow-2xl">
+          {/* Demo Banner */}
+          <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-sm font-medium text-blue-800">
+              Pilot Preview
+            </p>
+            <p className="mt-0.5 text-xs text-blue-600">
+              This is a demo build with mock clinical data. No real patient data is stored.
+            </p>
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              className="mt-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+            >
+              {demoLoading ? "Entering..." : "Enter as Dr. Priya Sharma"}
+            </button>
+          </div>
+
+          <div className="relative mb-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-400">or sign in with credentials</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Error Message */}
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             )}
 
-            {/* Employee ID */}
             <div>
               <label
                 htmlFor="employeeId"
@@ -80,7 +127,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label
                 htmlFor="password"
@@ -99,7 +145,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -135,7 +180,6 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer */}
         <p className="mt-6 text-center text-xs text-blue-200/60">
           Sundaram Medical Foundation &middot; IP EMR v1.0
         </p>

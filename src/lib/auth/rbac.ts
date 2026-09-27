@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { prisma, isDemoMode } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export type Permission = {
@@ -9,7 +9,13 @@ export type Permission = {
 
 const permissionCache = new Map<string, Permission[]>();
 
+const DEMO_PERMISSIONS: Permission[] = [
+  { resource: "*", action: "*" as Permission["action"] },
+];
+
 export async function getPermissions(roleId: string): Promise<Permission[]> {
+  if (isDemoMode) return DEMO_PERMISSIONS;
+
   const cached = permissionCache.get(roleId);
   if (cached) return cached;
 

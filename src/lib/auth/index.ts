@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/db";
+import { prisma, isDemoMode } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import type { Role } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -29,11 +28,23 @@ declare module "next-auth" {
   }
 }
 
+const DEMO_USER = {
+  id: "demo-user-001",
+  name: "Dr. Priya Sharma",
+  email: "priya.sharma@smf.org",
+  employeeId: "SMF1002",
+  roleData: { id: "role-physician", name: "physician" },
+  departmentId: "dept-gm",
+  departmentName: "General Medicine",
+  designation: "Senior Consultant",
+};
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: isDemoMode ? undefined : PrismaAdapter(prisma),
+  secret: process.env.AUTH_SECRET || "demo-secret-change-in-production",
   session: {
     strategy: "jwt",
-    maxAge: 15 * 60, // 15 minutes
+    maxAge: isDemoMode ? 24 * 60 * 60 : 15 * 60,
   },
   pages: {
     signIn: "/login",
@@ -47,6 +58,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.employeeId || !credentials?.password) return null;
+
+        if (isDemoMode) {
+          return DEMO_USER;
+        }
 
         const user = await prisma.user.findUnique({
           where: { employeeId: credentials.employeeId as string },
