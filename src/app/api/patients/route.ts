@@ -22,17 +22,18 @@ export async function GET(request: NextRequest) {
   const { query: q, type: searchType } = validation.data;
 
   let where = {};
-  switch (searchType) {
-    case "uhid":
-      where = { uhid: { contains: q } };
-      break;
-    case "phone":
-      where = { phone: { contains: q } };
-      break;
-    case "name":
-    default:
-      where = { name: { contains: q } };
-      break;
+  if (searchType === "uhid") {
+    where = { uhid: { contains: q } };
+  } else if (searchType === "phone") {
+    where = { phone: { contains: q } };
+  } else {
+    where = {
+      OR: [
+        { name: { contains: q } },
+        { uhid: { contains: q } },
+        { phone: { contains: q } },
+      ],
+    };
   }
 
   const patients = await prisma.patient.findMany({
