@@ -69,6 +69,13 @@ export default function AdmissionsPage() {
             Current and past inpatient admissions
           </p>
         </div>
+        <Link
+          href="/admissions/new"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <UserPlus className="h-4 w-4" />
+          New Admission
+        </Link>
       </div>
 
       <div className="flex items-center gap-2">
