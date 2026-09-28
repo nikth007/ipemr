@@ -41,8 +41,8 @@ export default function LoginPage() {
     setError("");
     try {
       const result = await signIn("credentials", {
-        employeeId: "SMF1002",
-        password: "demo",
+        employeeId: "DOC001",
+        password: "smf@2024",
         redirect: false,
       });
       if (result?.error) {
@@ -121,7 +121,7 @@ export default function LoginPage() {
                 type="text"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="e.g. SMF1001"
+                placeholder="e.g. DOC001"
                 required
                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0f4c75] focus:outline-none focus:ring-2 focus:ring-[#0f4c75]/20"
               />

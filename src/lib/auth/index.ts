@@ -29,14 +29,14 @@ declare module "next-auth" {
 }
 
 const DEMO_USER = {
-  id: "demo-user-001",
+  id: "usr-priya",
   name: "Dr. Priya Sharma",
-  email: "priya.sharma@smf.org",
-  employeeId: "SMF1002",
+  email: "priya.sharma@smf.org.in",
+  employeeId: "DOC001",
   roleData: { id: "role-physician", name: "physician" },
-  departmentId: "dept-gm",
+  departmentId: "dept-med",
   departmentName: "General Medicine",
-  designation: "Senior Consultant",
+  designation: "Consultant Physician",
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
