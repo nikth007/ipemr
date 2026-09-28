@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   BedDouble,
@@ -10,95 +11,20 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const stats = [
-  {
-    label: "Total Beds",
-    value: 120,
-    icon: BedDouble,
-    color: "text-blue-600 bg-blue-50",
-  },
-  {
-    label: "Occupied",
-    value: 87,
-    icon: Users,
-    color: "text-amber-600 bg-amber-50",
-  },
-  {
-    label: "Available",
-    value: 28,
-    icon: CheckCircle2,
-    color: "text-emerald-600 bg-emerald-50",
-  },
-  {
-    label: "Today's Admissions",
-    value: 6,
-    icon: UserPlus,
-    color: "text-purple-600 bg-purple-50",
-  },
-];
-
-const recentAdmissions = [
-  {
-    ipNo: "IP/2024/001234",
-    uhid: "UHID001",
-    patient: "Rajesh Kumar",
-    ward: "General Medicine",
-    bed: "GM-12",
-    doctor: "Dr. Priya Sharma",
-    admitted: "2024-01-15",
-    status: "admitted",
-  },
-  {
-    ipNo: "IP/2024/001235",
-    uhid: "UHID002",
-    patient: "Lakshmi Devi",
-    ward: "Surgery",
-    bed: "SU-04",
-    doctor: "Dr. Venkatesh Rao",
-    admitted: "2024-01-15",
-    status: "admitted",
-  },
-  {
-    ipNo: "IP/2024/001236",
-    uhid: "UHID003",
-    patient: "Mohammed Farooq",
-    ward: "ICU",
-    bed: "ICU-02",
-    doctor: "Dr. Anitha Menon",
-    admitted: "2024-01-14",
-    status: "critical",
-  },
-  {
-    ipNo: "IP/2024/001237",
-    uhid: "UHID004",
-    patient: "Srinivasan Iyer",
-    ward: "General Medicine",
-    bed: "GM-05",
-    doctor: "Dr. Priya Sharma",
-    admitted: "2024-01-14",
-    status: "admitted",
-  },
-  {
-    ipNo: "IP/2024/001238",
-    uhid: "UHID005",
-    patient: "Ananya Reddy",
-    ward: "Paediatrics",
-    bed: "PD-08",
-    doctor: "Dr. Suresh Babu",
-    admitted: "2024-01-14",
-    status: "admitted",
-  },
-  {
-    ipNo: "IP/2024/001239",
-    uhid: "UHID006",
-    patient: "Geetha Krishnan",
-    ward: "Surgery",
-    bed: "SU-11",
-    doctor: "Dr. Venkatesh Rao",
-    admitted: "2024-01-13",
-    status: "discharged",
-  },
-];
+interface DashboardData {
+  totalBeds: number;
+  occupied: number;
+  available: number;
+  todayAdmissions: number;
+  recentAdmissions: {
+    id: string;
+    visNo: string;
+    status: string;
+    admissionDate: string;
+    patient: { uhid: string; name: string };
+    bed: { bedNumber: string; ward: { name: string } } | null;
+  }[];
+}
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -114,9 +40,44 @@ function getStatusBadge(status: string) {
 }
 
 export default function WardDashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard")
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  const stats = [
+    {
+      label: "Total Beds",
+      value: data?.totalBeds ?? "—",
+      icon: BedDouble,
+      color: "text-blue-600 bg-blue-50",
+    },
+    {
+      label: "Occupied",
+      value: data?.occupied ?? "—",
+      icon: Users,
+      color: "text-amber-600 bg-amber-50",
+    },
+    {
+      label: "Available",
+      value: data?.available ?? "—",
+      icon: CheckCircle2,
+      color: "text-emerald-600 bg-emerald-50",
+    },
+    {
+      label: "Today's Admissions",
+      value: data?.todayAdmissions ?? "—",
+      icon: UserPlus,
+      color: "text-purple-600 bg-purple-50",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Ward Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -124,7 +85,6 @@ export default function WardDashboardPage() {
         </p>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div
@@ -148,7 +108,6 @@ export default function WardDashboardPage() {
         ))}
       </div>
 
-      {/* Recent Admissions Table */}
       <div className="rounded-xl border bg-card shadow-sm">
         <div className="flex items-center justify-between border-b px-6 py-4">
           <h2 className="text-lg font-semibold text-card-foreground">
@@ -175,9 +134,6 @@ export default function WardDashboardPage() {
                   Ward / Bed
                 </th>
                 <th className="px-6 py-3 text-left font-medium text-muted-foreground">
-                  Doctor
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-muted-foreground">
                   Admitted
                 </th>
                 <th className="px-6 py-3 text-left font-medium text-muted-foreground">
@@ -186,50 +142,73 @@ export default function WardDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {recentAdmissions.map((row) => (
-                <tr
-                  key={row.ipNo}
-                  className="transition-colors hover:bg-muted/30"
-                >
-                  <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
-                    {row.ipNo}
-                  </td>
-                  <td className="px-6 py-3">
-                    <Link
-                      href={`/patient/${row.uhid}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {row.patient}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-3 text-card-foreground">
-                    {row.ward}{" "}
-                    <span className="font-mono text-xs text-muted-foreground">
-                      ({row.bed})
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-card-foreground">
-                    {row.doctor}
-                  </td>
-                  <td className="px-6 py-3 text-card-foreground">
-                    {new Date(row.admitted).toLocaleDateString("en-IN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-                        getStatusBadge(row.status)
-                      )}
-                    >
-                      {row.status}
-                    </span>
+              {!data ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-8 text-center text-sm text-muted-foreground"
+                  >
+                    Loading...
                   </td>
                 </tr>
-              ))}
+              ) : data.recentAdmissions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-8 text-center text-sm text-muted-foreground"
+                  >
+                    No admissions yet
+                  </td>
+                </tr>
+              ) : (
+                data.recentAdmissions.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="transition-colors hover:bg-muted/30"
+                  >
+                    <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
+                      {row.visNo}
+                    </td>
+                    <td className="px-6 py-3">
+                      <Link
+                        href={`/patient/${row.patient.uhid}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {row.patient.name}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-3 text-card-foreground">
+                      {row.bed ? (
+                        <>
+                          {row.bed.ward.name}{" "}
+                          <span className="font-mono text-xs text-muted-foreground">
+                            ({row.bed.bedNumber})
+                          </span>
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-6 py-3 text-card-foreground">
+                      {new Date(row.admissionDate).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
+                          getStatusBadge(row.status)
+                        )}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

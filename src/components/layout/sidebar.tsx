@@ -13,8 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/bed-map", label: "Bed Map", icon: BedDouble },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/beds", label: "Bed Map", icon: BedDouble },
   { href: "/patients", label: "Patient Search", icon: Search },
   { href: "/admissions", label: "Admissions", icon: UserPlus },
 ];
@@ -40,7 +40,9 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
