@@ -52,13 +52,13 @@ INSERT INTO `departments` (`id`, `name`, `code`) VALUES
 
 -- Users (password: smf@2024)
 INSERT INTO `users` (`id`, `employee_id`, `name`, `email`, `password_hash`, `role_id`, `department_id`, `designation`, `updated_at`) VALUES
-('usr-admin', 'ADM001', 'System Admin', 'admin@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-admin', NULL, 'IT Administrator', NOW()),
-('usr-priya', 'DOC001', 'Dr. Priya Sharma', 'priya.sharma@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-physician', 'dept-med', 'Consultant Physician', NOW()),
-('usr-ravi', 'DOC002', 'Dr. Ravi Krishnan', 'ravi.k@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-physician', 'dept-sur', 'Consultant Surgeon', NOW()),
-('usr-anitha', 'DOC003', 'Dr. Anitha Venkatesh', 'anitha.v@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-physician', 'dept-ort', 'Consultant Orthopaedician', NOW()),
-('usr-kavitha', 'NUR001', 'Kavitha Ramanathan', 'kavitha.r@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-nurse', 'dept-med', 'Senior Staff Nurse', NOW()),
-('usr-meera', 'NUR002', 'Meera Sundaram', 'meera.s@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-nurse', 'dept-sur', 'Staff Nurse', NOW()),
-('usr-suresh', 'PHR001', 'Suresh Babu', 'suresh.b@smf.org.in', '$2a$10$8KzaNdKIMyOkASCPPBD8kuLkCrIHjlBMnMcv4D6v/4VFbkneVRtCe', 'role-pharmacist', NULL, 'Clinical Pharmacist', NOW());
+('usr-admin', 'ADM001', 'System Admin', 'admin@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-admin', NULL, 'IT Administrator', NOW()),
+('usr-priya', 'DOC001', 'Dr. Priya Sharma', 'priya.sharma@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-physician', 'dept-med', 'Consultant Physician', NOW()),
+('usr-ravi', 'DOC002', 'Dr. Ravi Krishnan', 'ravi.k@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-physician', 'dept-sur', 'Consultant Surgeon', NOW()),
+('usr-anitha', 'DOC003', 'Dr. Anitha Venkatesh', 'anitha.v@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-physician', 'dept-ort', 'Consultant Orthopaedician', NOW()),
+('usr-kavitha', 'NUR001', 'Kavitha Ramanathan', 'kavitha.r@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-nurse', 'dept-med', 'Senior Staff Nurse', NOW()),
+('usr-meera', 'NUR002', 'Meera Sundaram', 'meera.s@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-nurse', 'dept-sur', 'Staff Nurse', NOW()),
+('usr-suresh', 'PHR001', 'Suresh Babu', 'suresh.b@smf.org.in', '$2b$10$cphhWUNRqzFkM.gPvkqxnOuPmKCmg5x3/Fh0XQfhnwrXoH2rsQ1Oq', 'role-pharmacist', NULL, 'Clinical Pharmacist', NOW());
 
 -- Wards
 INSERT INTO `wards` (`id`, `name`, `department_id`, `ward_type`, `floor`) VALUES

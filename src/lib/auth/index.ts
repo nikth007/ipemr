@@ -63,34 +63,45 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return DEMO_USER;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { employeeId: credentials.employeeId as string },
-          include: { role: true, department: true },
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { employeeId: credentials.employeeId as string },
+            include: { role: true, department: true },
+          });
 
-        if (!user || !user.isActive) return null;
+          if (!user || !user.isActive) {
+            console.warn("[auth] No active user found for:", credentials.employeeId);
+            return null;
+          }
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-        if (!valid) return null;
+          const valid = await bcrypt.compare(
+            credentials.password as string,
+            user.passwordHash
+          );
+          if (!valid) {
+            console.warn("[auth] Invalid password for:", credentials.employeeId);
+            return null;
+          }
 
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          });
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          employeeId: user.employeeId,
-          roleData: { id: user.role.id, name: user.role.name },
-          departmentId: user.departmentId,
-          departmentName: user.department?.name ?? null,
-          designation: user.designation,
-        };
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            employeeId: user.employeeId,
+            roleData: { id: user.role.id, name: user.role.name },
+            departmentId: user.departmentId,
+            departmentName: user.department?.name ?? null,
+            designation: user.designation,
+          };
+        } catch (error) {
+          console.error("[auth] Database error during login:", error);
+          return null;
+        }
       },
     }),
   ],
