@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { SMF_LOGO } from "@/lib/logo";
 export default function LoginPage() {
   const router = useRouter();
   const [employeeId, setEmployeeId] = useState("");
@@ -62,14 +61,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo & Branding */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-28 w-64 items-center justify-center rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur">
-            <img
-              src={SMF_LOGO}
-              alt="Sundaram Medical Foundation - Dr. Rangarajan Memorial Hospital"
-              width={220}
-              height={90}
-              className="object-contain"
-            />
+          <div className="mx-auto mb-4 flex h-20 w-48 items-center justify-center rounded-2xl bg-white/95 shadow-lg backdrop-blur">
+            <span className="text-4xl font-extrabold tracking-tight text-[#0a3d2e]">SMF</span>
           </div>
           <h1 className="text-xl font-bold tracking-tight text-white">
             Inpatient Electronic Medical Records

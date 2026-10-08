@@ -75,9 +75,9 @@ interface VitalReading {
 interface Note {
   id: string;
   type: string;
-  author: string;
+  author: string | { name: string; designation?: string };
   createdAt: string;
-  content: string;
+  content: string | Record<string, string>;
 }
 
 // --- Vital Alert Logic ---
@@ -475,10 +475,14 @@ export default function PatientChartSummaryPage() {
                       </span>
                     </div>
                     <p className="text-sm leading-relaxed text-card-foreground line-clamp-2">
-                      {note.content}
+                      {typeof note.content === "string"
+                        ? note.content
+                        : Object.values(note.content).filter(v => typeof v === "string").join(" — ")}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {note.author}
+                      {typeof note.author === "string"
+                        ? note.author
+                        : note.author?.name ?? ""}
                     </p>
                   </li>
                 ))}

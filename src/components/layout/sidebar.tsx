@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { SMF_LOGO } from "@/lib/logo";
 import {
   LayoutDashboard,
   BedDouble,
@@ -28,14 +27,8 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="flex h-14 items-center gap-3 border-b border-white/10 px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white p-0.5">
-          <img
-            src={SMF_LOGO}
-            alt="SMF"
-            width={32}
-            height={32}
-            className="object-contain"
-          />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white/20 text-sm font-bold text-white">
+          S
         </div>
         <div>
           <p className="text-sm font-bold leading-none text-white">SMF</p>
