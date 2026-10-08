@@ -3,8 +3,6 @@
 import { useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-
 export default function LoginPage() {
   const router = useRouter();
   const [employeeId, setEmployeeId] = useState("");
@@ -64,13 +62,12 @@ export default function LoginPage() {
         {/* Logo & Branding */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-28 w-64 items-center justify-center rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur">
-            <Image
+            <img
               src="/smf-logo.png"
               alt="Sundaram Medical Foundation - Dr. Rangarajan Memorial Hospital"
               width={220}
               height={90}
               className="object-contain"
-              priority
             />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-white">

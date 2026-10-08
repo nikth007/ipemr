@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -29,7 +28,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-14 items-center gap-3 border-b border-white/10 px-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white p-0.5">
-          <Image
+          <img
             src="/smf-logo.png"
             alt="SMF"
             width={32}
