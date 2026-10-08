@@ -42,8 +42,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { patientId, bedId, attendingDoctorId, admissionType, chiefComplaint, provisionalDiagnosis } =
-    validation.data;
+  const {
+    patientId,
+    bedId,
+    attendingDoctorId,
+    admissionType,
+    admissionSource,
+    modeOfArrival,
+    referralSource,
+    triageLevel,
+    triageNotes,
+    chiefComplaint,
+    provisionalDiagnosis,
+  } = validation.data;
 
   const bed = await prisma.bed.findUnique({ where: { id: bedId } });
   if (!bed || bed.status !== "available") {
@@ -60,16 +71,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const lastEncounter = await prisma.encounter.findFirst({
-    orderBy: { createdAt: "desc" },
-    select: { visNo: true },
-  });
-  const nextNum = lastEncounter
-    ? parseInt(lastEncounter.visNo.split("/").pop() ?? "0") + 1
-    : 1;
-  const ipNo = `IP/${new Date().getFullYear()}/${String(nextNum).padStart(6, "0")}`;
-
   const encounter = await prisma.$transaction(async (tx) => {
+    const lastEncounter = await tx.encounter.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { visNo: true },
+    });
+    const nextNum = lastEncounter
+      ? parseInt(lastEncounter.visNo.split("/").pop() ?? "0") + 1
+      : 1;
+    const ipNo = `IP/${new Date().getFullYear()}/${String(nextNum).padStart(6, "0")}`;
+
     await tx.bed.update({
       where: { id: bedId },
       data: { status: "occupied" },
@@ -82,6 +93,12 @@ export async function POST(request: NextRequest) {
         bedId,
         attendingDoctorId,
         admissionType,
+        admissionSource,
+        modeOfArrival,
+        referralSource,
+        triageLevel,
+        triageNotes,
+        triageAt: triageLevel ? new Date() : undefined,
         chiefComplaint,
         provisionalDiagnosis,
       },
@@ -97,7 +114,7 @@ export async function POST(request: NextRequest) {
     action: "create",
     resourceType: "encounter",
     resourceId: encounter.id,
-    newValue: { ipNo, patientId, bedId },
+    newValue: { ipNo: encounter.visNo, patientId, bedId, admissionType, admissionSource },
   });
 
   return NextResponse.json(encounter, { status: 201 });

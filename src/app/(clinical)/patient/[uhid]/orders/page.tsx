@@ -12,6 +12,8 @@ import {
   Heart,
   ClipboardList,
   Search,
+  Ban,
+  XCircle,
 } from "lucide-react";
 import { cn, formatDateTime, getOrderStatusColor, getPriorityColor } from "@/lib/utils";
 
@@ -223,6 +225,40 @@ export default function OrdersPage({
   const [nursingInstruction, setNursingInstruction] = useState("");
   const [nursingFrequency, setNursingFrequency] = useState("");
   const [nursingCategory, setNursingCategory] = useState("monitoring");
+
+  // Discontinue state
+  const [discontinueOrderId, setDiscontinueOrderId] = useState<string | null>(null);
+  const [discontinueAction, setDiscontinueAction] = useState<"discontinue" | "cancel">("discontinue");
+  const [discontinueReason, setDiscontinueReason] = useState("");
+  const [discontinuing, setDiscontinuing] = useState(false);
+
+  async function handleDiscontinue() {
+    if (!discontinueOrderId || !discontinueReason.trim()) return;
+    setDiscontinuing(true);
+    try {
+      const res = await fetch(`/api/orders/${discontinueOrderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: discontinueAction,
+          reason: discontinueReason.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(
+          (errData as { error?: string }).error || "Failed to update order"
+        );
+      }
+      setDiscontinueOrderId(null);
+      setDiscontinueReason("");
+      if (encounterId) await fetchOrders(encounterId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update order");
+    } finally {
+      setDiscontinuing(false);
+    }
+  }
 
   const fetchOrders = useCallback(async (eid: string) => {
     const ordersRes = await fetch(`/api/orders?encounterId=${eid}`);
@@ -1109,6 +1145,36 @@ export default function OrdersPage({
                   &middot; {formatDateTime(order.orderedAt)}
                 </p>
               </div>
+
+              {/* Discontinue / Cancel buttons */}
+              {!["discontinued", "cancelled", "completed"].includes(order.status) && (
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscontinueOrderId(order.id);
+                      setDiscontinueAction("discontinue");
+                      setDiscontinueReason("");
+                    }}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400"
+                    title="Discontinue"
+                  >
+                    <Ban className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscontinueOrderId(order.id);
+                      setDiscontinueAction("cancel");
+                      setDiscontinueReason("");
+                    }}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                    title="Cancel Order"
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -1119,6 +1185,71 @@ export default function OrdersPage({
           </div>
         )}
       </div>
+
+      {/* Discontinue / Cancel Modal */}
+      {discontinueOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-card-foreground">
+              {discontinueAction === "discontinue"
+                ? "Discontinue Order"
+                : "Cancel Order"}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {discontinueAction === "discontinue"
+                ? "This will mark the order as discontinued. Active MAR schedules will remain for documentation."
+                : "This will cancel the order. Use this for orders that should not have been placed."}
+            </p>
+
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-card-foreground">
+                Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={discontinueReason}
+                onChange={(e) => setDiscontinueReason(e.target.value)}
+                rows={3}
+                placeholder={
+                  discontinueAction === "discontinue"
+                    ? "e.g., Patient developed adverse reaction, switched to alternative..."
+                    : "e.g., Duplicate order, entered in error..."
+                }
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscontinueOrderId(null);
+                  setDiscontinueReason("");
+                }}
+                className="rounded-lg border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscontinue}
+                disabled={discontinuing || !discontinueReason.trim()}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50",
+                  discontinueAction === "discontinue"
+                    ? "bg-amber-600 hover:bg-amber-700"
+                    : "bg-red-600 hover:bg-red-700"
+                )}
+              >
+                {discontinuing && <Loader2 className="h-4 w-4 animate-spin" />}
+                {discontinueAction === "discontinue"
+                  ? "Discontinue"
+                  : "Cancel Order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

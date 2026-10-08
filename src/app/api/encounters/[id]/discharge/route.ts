@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth/rbac";
+import { requirePermission } from "@/lib/auth/rbac";
 
 const dischargeMedicationSchema = z.object({
   drugId: z.string().min(1),
@@ -26,7 +26,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth();
+  const { error } = await requirePermission("discharge", "read");
   if (error) return error;
 
   const { id } = await params;
@@ -76,7 +76,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error, session } = await requireAuth();
+  const { error, session } = await requirePermission("discharge", "create");
   if (error) return error;
 
   const { id } = await params;
@@ -157,7 +157,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error, session } = await requireAuth();
+  const { error, session } = await requirePermission("discharge", "update");
   if (error) return error;
 
   const { id } = await params;

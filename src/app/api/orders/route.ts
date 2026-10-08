@@ -96,6 +96,47 @@ export async function POST(request: NextRequest) {
 
   const { encounterId, orderType, priority, notes, medicationOrder, investigationOrder, dietOrder, nursingOrder } = validation.data;
 
+  // Drug interaction check for medication orders
+  let interactions: { severity: string; description: string; drugName: string }[] = [];
+  if (orderType === "medication" && medicationOrder) {
+    const activeMedOrders = await prisma.order.findMany({
+      where: {
+        encounterId,
+        orderType: "medication",
+        status: { in: ["signed", "active"] },
+      },
+      select: { medicationOrder: { select: { drugId: true, drug: { select: { genericName: true } } } } },
+    });
+
+    const activeDrugIds = activeMedOrders
+      .map((o) => o.medicationOrder?.drugId)
+      .filter((id): id is string => !!id);
+
+    if (activeDrugIds.length > 0) {
+      const drugInteractions = await prisma.drugInteraction.findMany({
+        where: {
+          OR: [
+            { drugAId: medicationOrder.drugId, drugBId: { in: activeDrugIds } },
+            { drugBId: medicationOrder.drugId, drugAId: { in: activeDrugIds } },
+          ],
+        },
+        include: {
+          drugA: { select: { genericName: true } },
+          drugB: { select: { genericName: true } },
+        },
+      });
+
+      interactions = drugInteractions.map((di) => ({
+        severity: di.severity,
+        description: di.description,
+        drugName:
+          di.drugAId === medicationOrder.drugId
+            ? di.drugB.genericName
+            : di.drugA.genericName,
+      }));
+    }
+  }
+
   const subOrderCreate: Record<string, unknown> = {};
 
   if (orderType === "medication" && medicationOrder) {
@@ -136,5 +177,8 @@ export async function POST(request: NextRequest) {
     newValue: { orderType, priority },
   });
 
-  return NextResponse.json(order, { status: 201 });
+  return NextResponse.json(
+    { ...order, interactions: interactions.length > 0 ? interactions : undefined },
+    { status: 201 }
+  );
 }
