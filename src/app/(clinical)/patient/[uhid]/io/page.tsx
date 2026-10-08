@@ -53,11 +53,7 @@ const outputCategories = [
 
 // --- Component ---
 
-export default function IoPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function IoPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);

@@ -89,11 +89,7 @@ const initialFormState = {
   notes: "",
 };
 
-export default function VitalsPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function VitalsPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);

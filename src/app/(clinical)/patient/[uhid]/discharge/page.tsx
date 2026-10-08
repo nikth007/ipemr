@@ -66,11 +66,7 @@ interface PatientData {
 
 const conditions = ["stable", "improved", "unchanged", "deteriorated", "critical"];
 
-export default function DischargePage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function DischargePage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [loading, setLoading] = useState(true);

@@ -47,11 +47,7 @@ const resultStatusColors: Record<string, string> = {
   amended: "bg-purple-100 text-purple-800",
 };
 
-export default function InvestigationsPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function InvestigationsPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [investigations, setInvestigations] = useState<Investigation[]>([]);

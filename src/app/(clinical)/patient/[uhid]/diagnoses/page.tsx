@@ -58,11 +58,7 @@ function getTypeLabel(type: string): string {
 
 // --- Component ---
 
-export default function DiagnosesPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function DiagnosesPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);

@@ -171,11 +171,7 @@ function getOrderName(order: OrderRecord): string {
 
 // --- Component ---
 
-export default function OrdersPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function OrdersPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);

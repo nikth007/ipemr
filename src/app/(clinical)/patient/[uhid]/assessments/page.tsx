@@ -75,11 +75,7 @@ function formatFieldValue(value: unknown): string {
 
 // --- Component ---
 
-export default function AssessmentsPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function AssessmentsPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);

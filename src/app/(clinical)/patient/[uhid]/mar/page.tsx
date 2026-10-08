@@ -79,11 +79,7 @@ function groupByDate(records: MarRecord[]): Record<string, MarRecord[]> {
 
 // --- Component ---
 
-export default function MarPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function MarPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);

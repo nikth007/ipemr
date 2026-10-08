@@ -122,11 +122,7 @@ function getSectionLabel(key: string): string {
 
 // --- Component ---
 
-export default function NotesPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
+export default function NotesPage() {
   const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);
