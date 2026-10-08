@@ -184,6 +184,12 @@ visNo            String    @unique @map("ip_no")
   dischargeDate    DateTime? @map("discharge_date")
   status           String    @default("admitted") // admitted, discharged, transferred, lama
   admissionType    String    @default("elective") @map("admission_type") // emergency, elective
+  admissionSource  String?   @map("admission_source") // er_ambulance, er_walk_in, elective, day_case, inter_hospital_transfer, direct
+  modeOfArrival    String?   @map("mode_of_arrival") // ambulance, walk_in, brought_by_police, referred
+  referralSource   String?   @map("referral_source") @db.Text
+  triageLevel      Int?      @map("triage_level") // ESI 1-5
+  triageNotes      String?   @map("triage_notes") @db.Text
+  triageAt         DateTime? @map("triage_at")
   chiefComplaint   String?   @map("chief_complaint") @db.Text
   provisionalDiagnosis String? @map("provisional_diagnosis") @db.Text
   createdAt        DateTime  @default(now()) @map("created_at")

@@ -16,12 +16,33 @@ const medicationOrderSchema = z.object({
   instructions: z.string().optional(),
 });
 
+const investigationOrderSchema = z.object({
+  investigationId: z.string().min(1),
+  specimenType: z.string().optional(),
+  clinicalIndication: z.string().optional(),
+});
+
+const dietOrderSchema = z.object({
+  dietType: z.string().min(1),
+  restrictions: z.string().optional(),
+  specialInstructions: z.string().optional(),
+});
+
+const nursingOrderSchema = z.object({
+  instruction: z.string().min(1),
+  frequency: z.string().optional(),
+  category: z.string().optional(),
+});
+
 const orderSchema = z.object({
   encounterId: z.string().min(1),
   orderType: z.enum(["medication", "investigation", "diet", "nursing", "procedure"]),
   priority: z.enum(["stat", "urgent", "routine"]).default("routine"),
   notes: z.string().optional(),
-  medication: medicationOrderSchema.optional(),
+  medicationOrder: medicationOrderSchema.optional(),
+  investigationOrder: investigationOrderSchema.optional(),
+  dietOrder: dietOrderSchema.optional(),
+  nursingOrder: nursingOrderSchema.optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -44,7 +65,7 @@ export async function GET(request: NextRequest) {
     where,
     orderBy: { orderedAt: "desc" },
     include: {
-      orderedBy: { select: { name: true } },
+      orderedBy: { select: { name: true, designation: true } },
       medicationOrder: {
         include: { drug: { select: { genericName: true, brandName: true, strength: true, form: true } } },
       },
@@ -73,7 +94,60 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { encounterId, orderType, priority, notes, medication } = validation.data;
+  const { encounterId, orderType, priority, notes, medicationOrder, investigationOrder, dietOrder, nursingOrder } = validation.data;
+
+  // Drug interaction check for medication orders
+  let interactions: { severity: string; description: string; drugName: string }[] = [];
+  if (orderType === "medication" && medicationOrder) {
+    const activeMedOrders = await prisma.order.findMany({
+      where: {
+        encounterId,
+        orderType: "medication",
+        status: { in: ["signed", "active"] },
+      },
+      select: { medicationOrder: { select: { drugId: true, drug: { select: { genericName: true } } } } },
+    });
+
+    const activeDrugIds = activeMedOrders
+      .map((o) => o.medicationOrder?.drugId)
+      .filter((id): id is string => !!id);
+
+    if (activeDrugIds.length > 0) {
+      const drugInteractions = await prisma.drugInteraction.findMany({
+        where: {
+          OR: [
+            { drugAId: medicationOrder.drugId, drugBId: { in: activeDrugIds } },
+            { drugBId: medicationOrder.drugId, drugAId: { in: activeDrugIds } },
+          ],
+        },
+        include: {
+          drugA: { select: { genericName: true } },
+          drugB: { select: { genericName: true } },
+        },
+      });
+
+      interactions = drugInteractions.map((di) => ({
+        severity: di.severity,
+        description: di.description,
+        drugName:
+          di.drugAId === medicationOrder.drugId
+            ? di.drugB.genericName
+            : di.drugA.genericName,
+      }));
+    }
+  }
+
+  const subOrderCreate: Record<string, unknown> = {};
+
+  if (orderType === "medication" && medicationOrder) {
+    subOrderCreate.medicationOrder = { create: medicationOrder };
+  } else if (orderType === "investigation" && investigationOrder) {
+    subOrderCreate.investigationOrder = { create: investigationOrder };
+  } else if (orderType === "diet" && dietOrder) {
+    subOrderCreate.dietOrder = { create: dietOrder };
+  } else if (orderType === "nursing" && nursingOrder) {
+    subOrderCreate.nursingOrder = { create: nursingOrder };
+  }
 
   const order = await prisma.order.create({
     data: {
@@ -84,14 +158,14 @@ export async function POST(request: NextRequest) {
       orderedById: session!.user.id,
       status: "signed",
       signedAt: new Date(),
-      ...(orderType === "medication" && medication
-        ? { medicationOrder: { create: medication } }
-        : {}),
+      ...subOrderCreate,
     },
     include: {
-      medicationOrder: medication
-        ? { include: { drug: true } }
-        : false,
+      orderedBy: { select: { name: true, designation: true } },
+      medicationOrder: orderType === "medication" ? { include: { drug: true } } : false,
+      investigationOrder: orderType === "investigation" ? { include: { investigation: true } } : false,
+      dietOrder: orderType === "diet",
+      nursingOrder: orderType === "nursing",
     },
   });
 
@@ -103,5 +177,8 @@ export async function POST(request: NextRequest) {
     newValue: { orderType, priority },
   });
 
-  return NextResponse.json(order, { status: 201 });
+  return NextResponse.json(
+    { ...order, interactions: interactions.length > 0 ? interactions : undefined },
+    { status: 201 }
+  );
 }

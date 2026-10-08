@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, User } from "lucide-react";
+import { Search, User, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Patient {
@@ -53,11 +53,20 @@ export default function PatientsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Patient Search</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Search by name, UHID, or phone number
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Patient Search</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Search by name, UHID, or phone number
+          </p>
+        </div>
+        <Link
+          href="/patients/register"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <UserPlus className="h-4 w-4" />
+          Register Patient
+        </Link>
       </div>
 
       <div className="relative max-w-xl">
