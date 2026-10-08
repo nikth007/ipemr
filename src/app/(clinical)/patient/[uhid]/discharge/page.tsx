@@ -1,6 +1,7 @@
 "use client";
+import { useParams } from "next/navigation";
 
-import { use, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Loader2,
   AlertCircle,
@@ -70,7 +71,7 @@ export default function DischargePage({
 }: {
   params: Promise<{ uhid: string }>;
 }) {
-  const { uhid } = use(params);
+  const { uhid } = useParams<{ uhid: string }>();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

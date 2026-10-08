@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   Pill,
   Stethoscope,
@@ -106,12 +107,8 @@ function getVitalAlert(
 
 // --- Component ---
 
-export default function PatientChartSummaryPage({
-  params,
-}: {
-  params: Promise<{ uhid: string }>;
-}) {
-  const { uhid } = use(params);
+export default function PatientChartSummaryPage() {
+  const { uhid } = useParams<{ uhid: string }>();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

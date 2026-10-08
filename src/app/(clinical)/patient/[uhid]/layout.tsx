@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { PatientHeader } from "@/components/clinical/patient-header";
 import { ChartTabs } from "@/components/clinical/chart-tabs";
@@ -35,13 +36,8 @@ interface PatientDetail {
   encounters: Encounter[];
 }
 
-interface PatientLayoutProps {
-  children: React.ReactNode;
-  params: Promise<{ uhid: string }>;
-}
-
-export default function PatientLayout({ children, params }: PatientLayoutProps) {
-  const { uhid } = use(params);
+export default function PatientLayout({ children }: { children: React.ReactNode }) {
+  const { uhid } = useParams<{ uhid: string }>();
 
   const [patient, setPatient] = useState<PatientDetail | null>(null);
   const [loading, setLoading] = useState(true);

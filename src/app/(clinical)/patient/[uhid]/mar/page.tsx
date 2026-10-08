@@ -1,6 +1,7 @@
 "use client";
+import { useParams } from "next/navigation";
 
-import { use, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Plus,
   Loader2,
@@ -83,7 +84,7 @@ export default function MarPage({
 }: {
   params: Promise<{ uhid: string }>;
 }) {
-  const { uhid } = use(params);
+  const { uhid } = useParams<{ uhid: string }>();
 
   const [encounterId, setEncounterId] = useState<string | null>(null);
   const [noAdmission, setNoAdmission] = useState(false);

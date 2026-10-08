@@ -1,6 +1,7 @@
 "use client";
+import { useParams } from "next/navigation";
 
-import { use, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Loader2, AlertCircle, FlaskConical, AlertTriangle } from "lucide-react";
 import { cn, formatDateTime } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ export default function InvestigationsPage({
 }: {
   params: Promise<{ uhid: string }>;
 }) {
-  const { uhid } = use(params);
+  const { uhid } = useParams<{ uhid: string }>();
 
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [loading, setLoading] = useState(true);
