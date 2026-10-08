@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,38 +59,45 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f4c75] to-[#1b262c] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a3d2e] via-[#0f4c3a] to-[#1a2332] px-4">
       <div className="w-full max-w-md">
-        {/* Logo / Branding */}
+        {/* Logo & Branding */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur">
-            <span className="text-2xl font-bold text-white">S</span>
+          <div className="mx-auto mb-4 flex h-28 w-64 items-center justify-center rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur">
+            <Image
+              src="/smf-logo.png"
+              alt="Sundaram Medical Foundation - Dr. Rangarajan Memorial Hospital"
+              width={220}
+              height={90}
+              className="object-contain"
+              priority
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">
-            Sign In to IP EMR
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Inpatient Electronic Medical Records
           </h1>
-          <p className="mt-1 text-sm text-blue-200">
-            Sundaram Medical Foundation
+          <p className="mt-1 text-sm font-medium text-emerald-200/80">
+            Dr. Rangarajan Memorial Hospital
           </p>
         </div>
 
         {/* Login Card */}
         <div className="rounded-xl border border-white/10 bg-white p-8 shadow-2xl">
-          {/* Demo Banner */}
-          <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-sm font-medium text-blue-800">
+          {/* Quick Access */}
+          <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p className="text-sm font-medium text-emerald-800">
               Pilot Preview
             </p>
-            <p className="mt-0.5 text-xs text-blue-600">
-              This is a demo build with mock clinical data. No real patient data is stored.
+            <p className="mt-0.5 text-xs text-emerald-600">
+              Demo environment with sample clinical data for evaluation.
             </p>
             <button
               type="button"
               onClick={handleDemoLogin}
               disabled={demoLoading}
-              className="mt-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+              className="mt-2 rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-800 disabled:opacity-60"
             >
-              {demoLoading ? "Entering..." : "Enter as Dr. Priya Sharma"}
+              {demoLoading ? "Entering..." : "Quick Login as Dr. Priya Sharma"}
             </button>
           </div>
 
@@ -98,7 +106,9 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-400">or sign in with credentials</span>
+              <span className="bg-white px-2 text-gray-400">
+                or sign in with credentials
+              </span>
             </div>
           </div>
 
@@ -123,7 +133,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmployeeId(e.target.value)}
                 placeholder="e.g. DOC001"
                 required
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0f4c75] focus:outline-none focus:ring-2 focus:ring-[#0f4c75]/20"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
               />
             </div>
 
@@ -141,14 +151,14 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#0f4c75] focus:outline-none focus:ring-2 focus:ring-[#0f4c75]/20"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/20"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center rounded-lg bg-[#0f4c75] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0d3d5f] focus:outline-none focus:ring-2 focus:ring-[#0f4c75]/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700/50 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
                 <>
@@ -180,7 +190,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-blue-200/60">
+        <p className="mt-6 text-center text-xs text-emerald-200/50">
           Sundaram Medical Foundation &middot; IP EMR v1.0
         </p>
       </div>
